@@ -905,8 +905,9 @@ class ImageDataGenerator(object):
              dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
              dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
 
-             x1, y1 = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]))
-             indices = np.reshape(y1+dy, -1), np.reshape(x1+dx, -1)
+
+             x1, y1, z1 = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2]))
+             indices = np.reshape(y1+dy, (-1, 1)), np.reshape(x1+dx, (-1, 1)), np.reshape(z, (-1, 1))
 
              distored_image = map_coordinates(x, indices, order=1, mode='reflect')
              x = distored_image.reshape(x.shape)
