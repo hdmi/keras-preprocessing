@@ -907,7 +907,7 @@ class ImageDataGenerator(object):
 
 
              x1, y1, z1 = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2]))
-             indices = np.reshape(y1+dy, (-1, 1)), np.reshape(x1+dx, (-1, 1)), np.reshape(z, (-1, 1))
+             indices = np.reshape(y1+dy, (-1, 1)), np.reshape(x1+dx, (-1, 1)), np.reshape(z1, (-1, 1))
 
              distored_image = map_coordinates(x, indices, order=1, mode='reflect')
              x = distored_image.reshape(x.shape)
