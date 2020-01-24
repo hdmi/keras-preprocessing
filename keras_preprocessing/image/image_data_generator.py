@@ -14,6 +14,8 @@ try:
     # scipy.linalg cannot be accessed until explicitly imported
     from scipy import linalg
     # scipy.ndimage cannot be accessed until explicitly imported
+    from scipy.ndimage.interpolation import map_coordinates
+    from scipy.ndimage.filters import gaussian_filter
 except ImportError:
     scipy = None
 
@@ -49,7 +51,7 @@ class ImageDataGenerator(object):
                 are integers `[-1, 0, +1]`,
                 same as with `width_shift_range=[-1, 0, +1]`,
                 while with `width_shift_range=1.0` possible values are floats
-                in the interval `[-1.0, +1.0)`.
+                in the interval [-1.0, +1.0).
         height_shift_range: Float, 1-D array-like or int
             - float: fraction of total height, if < 1, or pixels if >= 1.
             - 1-D array-like: random elements from the array.
@@ -59,7 +61,7 @@ class ImageDataGenerator(object):
                 are integers `[-1, 0, +1]`,
                 same as with `height_shift_range=[-1, 0, +1]`,
                 while with `height_shift_range=1.0` possible values are floats
-                in the interval `[-1.0, +1.0)`.
+                in the interval [-1.0, +1.0).
         brightness_range: Tuple or list of two floats. Range for picking
             a brightness shift value from.
         shear_range: Float. Shear Intensity
@@ -87,8 +89,8 @@ class ImageDataGenerator(object):
         preprocessing_function: function that will be applied on each input.
             The function will run after the image is resized and augmented.
             The function should take one argument:
-            one image (NumPy tensor with rank 3),
-            and should output a NumPy tensor with the same shape.
+            one image (Numpy tensor with rank 3),
+            and should output a Numpy tensor with the same shape.
         data_format: Image data format,
             either "channels_first" or "channels_last".
             "channels_last" mode means that the images should have shape
@@ -274,6 +276,7 @@ class ImageDataGenerator(object):
                  data_format='channels_last',
                  validation_split=0.0,
                  interpolation_order=1,
+                 elastic_deformation=0,
                  dtype='float32'):
 
         self.featurewise_center = featurewise_center
@@ -296,6 +299,7 @@ class ImageDataGenerator(object):
         self.preprocessing_function = preprocessing_function
         self.dtype = dtype
         self.interpolation_order = interpolation_order
+        self.elastic_deformation = elastic_deformation
 
         if data_format not in {'channels_last', 'channels_first'}:
             raise ValueError(
@@ -364,6 +368,9 @@ class ImageDataGenerator(object):
                     'Received: %s' % (brightness_range,))
         self.brightness_range = brightness_range
 
+    def hola():
+        print("Worm has been planted!")
+
     def flow(self,
              x,
              y=None,
@@ -378,10 +385,10 @@ class ImageDataGenerator(object):
         """Takes data & label arrays, generates batches of augmented data.
 
         # Arguments
-            x: Input data. NumPy array of rank 4 or a tuple.
+            x: Input data. Numpy array of rank 4 or a tuple.
                 If tuple, the first element
                 should contain the images and the second element
-                another NumPy array or a list of NumPy arrays
+                another numpy array or a list of numpy arrays
                 that gets passed to the output
                 without any modifications.
                 Can be used to feed the model miscellaneous data
@@ -409,13 +416,13 @@ class ImageDataGenerator(object):
 
         # Returns
             An `Iterator` yielding tuples of `(x, y)`
-                where `x` is a NumPy array of image data
+                where `x` is a numpy array of image data
                 (in the case of a single image input) or a list
-                of NumPy arrays (in the case with
-                additional inputs) and `y` is a NumPy array
+                of numpy arrays (in the case with
+                additional inputs) and `y` is a numpy array
                 of corresponding labels. If 'sample_weight' is not None,
                 the yielded tuples are of the form `(x, y, sample_weight)`.
-                If `y` is None, only the NumPy array `x` is returned.
+                If `y` is None, only the numpy array `x` is returned.
         """
         return NumpyArrayIterator(
             x,
@@ -429,8 +436,7 @@ class ImageDataGenerator(object):
             save_to_dir=save_to_dir,
             save_prefix=save_prefix,
             save_format=save_format,
-            subset=subset,
-            dtype=self.dtype
+            subset=subset
         )
 
     def flow_from_directory(self,
@@ -518,9 +524,9 @@ class ImageDataGenerator(object):
 
         # Returns
             A `DirectoryIterator` yielding tuples of `(x, y)`
-                where `x` is a NumPy array containing a batch
+                where `x` is a numpy array containing a batch
                 of images with shape `(batch_size, *target_size, channels)`
-                and `y` is a NumPy array of corresponding labels.
+                and `y` is a numpy array of corresponding labels.
         """
         return DirectoryIterator(
             directory,
@@ -538,8 +544,7 @@ class ImageDataGenerator(object):
             save_format=save_format,
             follow_links=follow_links,
             subset=subset,
-            interpolation=interpolation,
-            dtype=self.dtype
+            interpolation=interpolation
         )
 
     def flow_from_dataframe(self,
@@ -602,14 +607,14 @@ class ImageDataGenerator(object):
             class_mode: one of "binary", "categorical", "input", "multi_output",
                 "raw", sparse" or None. Default: "categorical".
                 Mode for yielding the targets:
-                - `"binary"`: 1D NumPy array of binary labels,
-                - `"categorical"`: 2D NumPy array of one-hot encoded labels.
+                - `"binary"`: 1D numpy array of binary labels,
+                - `"categorical"`: 2D numpy array of one-hot encoded labels.
                     Supports multi-label output.
                 - `"input"`: images identical to input images (mainly used to
                     work with autoencoders),
                 - `"multi_output"`: list with the values of the different columns,
-                - `"raw"`: NumPy array of values in `y_col` column(s),
-                - `"sparse"`: 1D NumPy array of integer labels,
+                - `"raw"`: numpy array of values in `y_col` column(s),
+                - `"sparse"`: 1D numpy array of integer labels,
                 - `None`, no targets are returned (the generator will only yield
                     batches of image data, which is useful to use in
                     `model.predict_generator()`).
@@ -641,9 +646,9 @@ class ImageDataGenerator(object):
 
         # Returns
             A `DataFrameIterator` yielding tuples of `(x, y)`
-            where `x` is a NumPy array containing a batch
+            where `x` is a numpy array containing a batch
             of images with shape `(batch_size, *target_size, channels)`
-            and `y` is a NumPy array of corresponding labels.
+            and `y` is a numpy array of corresponding labels.
         """
         if 'has_ext' in kwargs:
             warnings.warn('has_ext is deprecated, filenames in the dataframe have '
@@ -682,20 +687,19 @@ class ImageDataGenerator(object):
             save_format=save_format,
             subset=subset,
             interpolation=interpolation,
-            validate_filenames=validate_filenames,
-            dtype=self.dtype
+            validate_filenames=validate_filenames
         )
 
     def standardize(self, x):
         """Applies the normalization configuration in-place to a batch of inputs.
 
         `x` is changed in-place since the function is mainly used internally
-        to standardize images and feed them to your network. If a copy of `x`
+        to standarize images and feed them to your network. If a copy of `x`
         would be created instead it would have a significant performance cost.
         If you want to apply this method without changing the input in-place
         you can call the method creating a copy before:
 
-        standardize(np.copy(x))
+        standarize(np.copy(x))
 
         # Arguments
             x: Batch of inputs to be normalized.
@@ -817,6 +821,11 @@ class ImageDataGenerator(object):
         if self.brightness_range is not None:
             brightness = np.random.uniform(self.brightness_range[0],
                                            self.brightness_range[1])
+        elastic_def = 0
+        if self.elastic_deformation:
+            elastic_def = np.random.uniform(
+                -self.elastic_deformation,
+                self.elastic_deformation)
 
         transform_parameters = {'theta': theta,
                                 'tx': tx,
@@ -827,7 +836,8 @@ class ImageDataGenerator(object):
                                 'flip_horizontal': flip_horizontal,
                                 'flip_vertical': flip_vertical,
                                 'channel_shift_intensity': channel_shift_intensity,
-                                'brightness': brightness}
+                                'brightness': brightness,
+                                'elastic_deformation': elastic_def}
 
         return transform_parameters
 
@@ -886,7 +896,23 @@ class ImageDataGenerator(object):
         if transform_parameters.get('brightness') is not None:
             x = apply_brightness_shift(x, transform_parameters['brightness'])
 
+        if transform_parameters.get('elastic_deformation') is not 0:
+             print("Entering apply transform: x shape is: {}".format(x.shape))
+             random_state = np.random.RandomState(None)
+             shape = x.shape
+             sigma = transform_parameters.get('elastic_deformation')
+             alpha = 99
+             dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
+             dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
+
+             x1, y1 = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]))
+             indices = np.reshape(y1+dy, -1), np.reshape(x1+dx, -1)
+
+             distored_image = map_coordinates(x, indices, order=1, mode='reflect')
+             x = distored_image.reshape(x.shape)
+
         return x
+
 
     def random_transform(self, x, seed=None):
         """Applies a random transformation to an image.
@@ -912,9 +938,6 @@ class ImageDataGenerator(object):
 
         Only required if `featurewise_center` or
         `featurewise_std_normalization` or `zca_whitening` are set to True.
-
-        When `rescale` is set to a value, rescaling is applied to
-        sample data before computing the internal data stats.
 
         # Arguments
             x: Sample data. Should have rank 4.
@@ -949,9 +972,6 @@ class ImageDataGenerator(object):
             np.random.seed(seed)
 
         x = np.copy(x)
-        if self.rescale:
-            x *= self.rescale
-
         if augment:
             ax = np.zeros(
                 tuple([rounds * x.shape[0]] + list(x.shape)[1:]),
