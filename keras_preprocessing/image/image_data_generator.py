@@ -821,11 +821,17 @@ class ImageDataGenerator(object):
         if self.brightness_range is not None:
             brightness = np.random.uniform(self.brightness_range[0],
                                            self.brightness_range[1])
-        elastic_def = 0
+        elastic_def = (0,0)
         if self.elastic_deformation:
-            elastic_def = np.random.uniform(
-                -self.elastic_deformation,
-                self.elastic_deformation)
+            elasticLevels = [(0,0), (10,2), (30,2), (40,3), (100,3), (50,2), (40,2), (60,2), (70,2), (80,2), (90,2)]
+
+            if self.elastic_deformation > 10:
+                elastic_def = elasticLevels[10]
+            elif self.elastic_deformation < 0:
+                elastic_def = elasticLevels[0]
+            else:
+                elastic_def = elasticLevels[self.elastic_deformation]
+
 
         transform_parameters = {'theta': theta,
                                 'tx': tx,
@@ -896,12 +902,11 @@ class ImageDataGenerator(object):
         if transform_parameters.get('brightness') is not None:
             x = apply_brightness_shift(x, transform_parameters['brightness'])
 
-        if transform_parameters.get('elastic_deformation') is not 0:
+        if transform_parameters.get('elastic_deformation'):
              print("Entering apply transform: x shape is: {}".format(x.shape))
+             alpha, sigma = transform_parameters.get('elastic_deformation')
              random_state = np.random.RandomState(None)
              shape = x.shape
-             sigma = transform_parameters.get('elastic_deformation')
-             alpha = 99
              dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
              dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode="constant", cval=0) * alpha
 
