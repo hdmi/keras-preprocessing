@@ -903,7 +903,6 @@ class ImageDataGenerator(object):
             x = apply_brightness_shift(x, transform_parameters['brightness'])
 
         if transform_parameters.get('elastic_deformation'):
-             print("Entering apply transform: x shape is: {}".format(x.shape))
              alpha, sigma = transform_parameters.get('elastic_deformation')
              random_state = np.random.RandomState(None)
              shape = x.shape
